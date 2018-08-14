@@ -29,9 +29,11 @@ export default class Note extends Component {
                 
                 </View>{/* The Before-Swipe view */}
                     <View style={styles.standaloneRowFront}>
-                    <Text style={styles.noteText}>{this.props.val.date}</Text>
-                    <Text style={styles.noteText}>{this.props.val.note}</Text>
-                    
+                    <Text style={styles.noteText}>{this.props.val.subject}</Text>
+                    <Text style={styles.noteText}>{this.props.val.description}</Text>
+                    <Text style={styles.noteText}>{this.props.val.location}</Text>
+                    <Text style={styles.noteText}>{this.props.val.time}</Text>
+
                     <TouchableOpacity onPress={this.confirm.bind(this)} style={styles.noteConfirm}>
                         <Text style={styles.noteDeleteText}>{this.state.confirm}</Text>
                     </TouchableOpacity>

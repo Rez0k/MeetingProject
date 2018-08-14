@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import{ StackNavigator, NavigationActions } from 'react-navigation';
 import Note from './Note';
-import NewGroup from './NewGroup';
+import TimerMixin from 'react-timer-mixin';
+import Contacts from 'react-native-contacts';
+import ContactsWrapper from 'react-native-contacts-wrapper';
 
 class HomeScreen extends Component{
     static navigationOptions={
@@ -22,18 +24,41 @@ class HomeScreen extends Component{
         this.state={
             noteArray: [],
             noteText: '',
+            meetingSub: '',
+            description: '',
+            location: '',
+            time: '',
+            lastScreen: '',
         }
+        global.variable='';
+    }
+
+    componentDidUpdate(){
+        
+        if(global.variable!=='1'){
+        if(this.state.lastScreen==="NoteFinished"){
+            this.state.noteArray.push({
+                'subject': this.state.meetingSub,
+                'description': this.state.description,
+                'location': this.state.location,
+                'time': this.state.time,
+            });
+            this.setState({ noteArray: this.state.noteArray });
+            this.setState({ lastScreen: '' });
+        }
+        global.variable='1';
+    }
     }
 
     render(){
 
-        const setParamsAction = NavigationActions.setParams({
-            params: { title: 'Hello' },
-            key: 'screen-123',
-          });
-          this.props.navigation.dispatch(setParamsAction);
-
         const { navigate } = this.props.navigation;
+        const {state} = this.props.navigation;
+        this.state.meetingSub = state.params ? state.params.meetingSub : "<undefined>";
+        this.state.description = state.params ? state.params.description : "<undefined>";
+        this.state.location = state.params ? state.params.location : "<undefined>";
+        this.state.time = state.params ? state.params.time : "<undefined>";
+        this.state.lastScreen = state.params ? state.params.lastScreen : "<undefined>";
 
         let notes = this.state.noteArray.map((val, key)=>{
             return <Note key={key} keyval={key} val={val}
@@ -43,47 +68,27 @@ class HomeScreen extends Component{
         return (
             <View style={styles.container}>
             <View style={styles.header} >
-                <TouchableOpacity style={styles.groupBackground} onPress={()=> navigate('Group',{preVal2: 'Ysso'})}>
+                <TouchableOpacity style={styles.groupBackground} onPress={()=> {navigate('Group');}}>
                     <Text style={styles.createGroup}>צור קבוצה</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerText}>Search...</Text>
-                
             </View>
-
             <ScrollView style={styles.scrollContainer}>
                 {notes}
             </ScrollView>
-            <View style={styles.footer}>
-                <TextInput 
-                    style={styles.textInput}
-                    placeholder='Write a Note:'
-                    onChangeText={(noteText)=> this.setState({noteText})}
-                    value={this.state.noteText}
-                    placeholderTextColor='white'
-                    underlineColorAndroid='transparent'>
-                </TextInput>
-            </View>
-            <TouchableOpacity onPress={ this.addNote.bind(this) } style={styles.addButton}>
-                <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
-            
-            
         </View>
-            
-                
         );
     }
+
     addNote(){
-        if(this.state.noteText){
-            var d = new Date();
+        if(this.state.lastScreen=="NoteFinished"){
             this.state.noteArray.push({
-                'date':d.getFullYear()+
-                "/"+(d.getMonth()+1) +
-                "/"+ d.getDate(),
-                'note': this.state.noteText
+                'subject': this.state.meetingSub,
+                'description': this.state.description,
+                'location': this.state.location,
+                'time': this.state.time,
             });
             this.setState({ noteArray: this.state.noteArray });
-            this.setState({noteText:''});
         }
     }
 
@@ -93,15 +98,111 @@ class HomeScreen extends Component{
     }
 }
 
+/////////////////////////////////////////////////////
+
  class GroupPage extends Component{
     static navigationOptions={
         header: null,
     };
-    render(){
+
+    constructor(props){
+        super(props);
+        this.state={
+            meetingSub: '',
+            description: '',
+            location: '',
+            time: '',
+            contactsArr: [],
+        };
+        insertContactToDB=this.insertContactToDB.bind(this);
+    }   
+
+    insertContactToDB(contactName,contactPhone){
+        //לא לשכוח לעשות בדיקהכ שהכל ממולא
+        this.state.contactsArr.push({
+            name: contactName,
+            phone: contactPhone,
+        });
+    }
+    
+
+    render(){  
+        const { navigate } = this.props.navigation; {/* Navigate to comeback */}
+        const {state} = this.props.navigation;
+        global.variable=''; {/* reset the variable so didupdate will work every time returning to screen */}
+
         return (
-             <NewGroup />
+            <View style={styles.container}>
+                <View style={styles.header} >
+                    <Text style={styles.headerText}>צור קבוצה חדשה</Text> 
+                </View>
+
+                <View style={styles.groupText}>
+                    <Text style={styles.SubjectText}>נושא הפגישה:</Text>
+                </View>
+                    <TextInput
+                        style={{height: 40, marginTop: 15}}
+                        onChangeText={(meetingSub) => this.setState({meetingSub})}
+                    />
+                
+                <View style={styles.groupText}>
+                    <Text style={styles.SubjectText}>תיאור:</Text>
+                </View>
+                    <TextInput
+                        style={{height: 40, marginTop: 15}}
+                        onChangeText={(description) => this.setState({description})}
+                    />
+                
+                <View style={styles.groupText}>
+                    <Text style={styles.SubjectText}>מיקום:</Text>
+                </View>
+                    <TextInput
+                        style={{height: 40, marginTop: 15}}
+                        onChangeText={(location) => this.setState({location})}
+                    />
+                
+                <View style={styles.groupText}>
+                <Text style={styles.SubjectText}>זמן:</Text>
+                </View>
+                    <TextInput
+                        style={{height: 40, marginTop: 15}}
+                        onChangeText={(time) => this.setState({time})}
+                    />
+
+                <View style={styles.groupText}>
+                <Text style={styles.SubjectText}>הוסף אנשי קשר שתרצה להזמין</Text>
+                    <TouchableOpacity style={styles.addButton} onPress={()=> this.getAllContacts()}>
+                        <Text style={styles.addButtonText}>+</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={{position: 'absolute', bottom: 10, left: 0, right: 0}}>
+                    <Button
+                        onPress={()=> navigate('Home',{lastScreen: 'NoteFinished',meetingSub: this.state.meetingSub,description: this.state.description,location: this.state.location,time: this.state.time}) }
+                        title="סיים"
+                        color="#841584"
+                    />
+                </View>
+            </View>
         );
     }
+
+    getAllContacts(){
+        ContactsWrapper.getContact()
+        .then((contact) => {
+            setTimeout(() => {
+            insertContactToDB(contact.name,contact.phone);
+            alert(this.state.contactsArr[0].name);
+            }, (500));
+        })
+        .catch((error) => {
+            alert( error.message);
+            console.log("ERROR MESSAGE: ", error.message);
+        });
+        
+    }
+
+    
 }
 
 const NavigationApp= StackNavigator({
@@ -154,13 +255,10 @@ const styles = StyleSheet.create({
         borderTopColor: '#ededed'
     },
     addButton: {
-        position: 'absolute',
         zIndex: 11,
-        right: 20,
-        bottom: 90,
         backgroundColor: '#E91E63',
-        width: 70,
-        height: 70,
+        width: 30,
+        height: 30,
         borderRadius: 35,
         alignItems: 'center',
         justifyContent: 'center',
@@ -184,5 +282,13 @@ const styles = StyleSheet.create({
         bottom: 10,
         left: 10,
     },
+    groupText: {
+        alignItems:'center',
+        justifyContent: 'center',
+    },SubjectText: {
+        fontSize: 20,
+        marginTop: 20,
+        color: 'black',
+    }
 });
 
